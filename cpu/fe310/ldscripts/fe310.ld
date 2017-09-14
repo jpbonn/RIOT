@@ -172,6 +172,7 @@ SECTIONS
   . = ALIGN(8);
   PROVIDE( _end = . );
   PROVIDE( end = . );
+  PROVIDE( _heap_start = . );
 
   .isrstack ORIGIN(ram) + LENGTH(ram) - __stack_size - __isr_stack_size :
   {

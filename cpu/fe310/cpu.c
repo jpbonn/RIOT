@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 
 #include "arch/thread_arch.h"
 #include "arch/irq_arch.h"
@@ -39,6 +40,8 @@ extern uint32_t	__isr_stack_size;
 volatile int __in_isr = 0;
 
 void trap_entry(void);
+void thread_start(void);
+void thread_switch(void);
 
 
 /**
@@ -56,16 +59,12 @@ void cpu_init(void)
 	    write_csr(fcsr, 0);				// initialize rounding mode, undefined at reset
 	}
 
+	//	Initialize newlib-nano stubs
+	nanostubs_init();
+
 	//	Enable SW interrupt (for thread context switching)
-	set_csr(mie, MIP_MSIP);
-}
-
-void _init(void)
-{
-}
-
-void _fini(void)
-{
+	write_csr(mie, 0);
+//	set_csr(mie, MIP_MSIP);
 }
 
 
@@ -108,7 +107,7 @@ int irq_arch_in(void)
 /**
  * @brief Global trap and interrupt handler
  */
-unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp)
+unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigned int mstatus)
 {
 	__in_isr = 1;
 
@@ -119,7 +118,7 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp)
 		switch(mcause & MCAUSE_INT)
 		{
 			case IRQ_M_SOFT:
-				//	Software interrupt - for thread scheduling
+				//	Software interrupt - for thread scheduling (handled below)
 				clear_csr(mie, MIP_MSIP);
 				CLINT_REG(CLINT_MSIP) = 0;
 
@@ -131,6 +130,8 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp)
 				//	Timer interrupt
 				clear_csr(mie, MIP_MTIP);
 
+				//	Handle timer interrupt
+
 				//	Reset interrupt
 				set_csr(mie, MIP_MTIP);
 				break;
@@ -139,12 +140,14 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp)
 				//	External interrupt
 				clear_csr(mie, MIP_MEIP);
 
+				//	Handle external interrupt
+
 				//	Reset interrupt
 				set_csr(mie, MIP_MEIP);
 				break;
 
 			default:
-				//	Unknown interrupt
+				//	Unknown interrupt - ignore
 				break;
 		}
 
@@ -162,7 +165,9 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp)
 
     //	Return SP for running thread
     sp = (unsigned int) sched_active_thread->sp;
+
 	__in_isr = 0;
+
 	return sp;
 }
 
@@ -181,15 +186,37 @@ char *thread_arch_stack_init(thread_task_func_t task_func,
                              void *stack_start,
                              int stack_size)
 {
-    uint32_t *stk;
+    uint32_t *stk, *stkFrame;
+
+    //	Create the initial stack frame for this thread function
     stk = (uint32_t *)((uintptr_t)stack_start + stack_size);
 
-    /* adjust to 32 bit boundary by clearing the last two bits in the address */
+    //	adjust to 32 bit boundary by clearing the last two bits in the address
     stk = (uint32_t *)(((uint32_t)stk) & ~((uint32_t)0x3));
 
-    /* stack start marker */
+    //	stack start marker
     stk--;
     *stk = STACK_MARKER;
+    stkFrame = stk;
+    stk -= 34;
+
+    //	set all values of frame to 0
+    for(int i=0; i<34; i++)
+    	stk[i] = 0;
+
+    //	set return address (x1 reg = ra) to be the task_exit function
+    stk[1] = (unsigned int) sched_task_exit;
+
+    //	set stack ptr (x2 reg = sp) to this initial stack frame
+    stk[2] = (unsigned int) stkFrame;
+
+    //	set a0 to given task args
+    stk[10] = (unsigned int) arg;
+
+    //	set initial mstatus and mepc
+//    stk[32] = (unsigned int) (MSTATUS_MPP | MSTATUS_MPIE);
+    stk[32] = (unsigned int) (MSTATUS_MPP);
+    stk[33] = (unsigned int) task_func;
 
     return (char*) stk;
 }
@@ -234,14 +261,15 @@ void thread_arch_start_threading(void)
 	//	Initialize threading
     sched_active_thread = sched_threads[0];
     sched_run();
-    CLINT_REG(CLINT_MSIP) = 1;
-
+    irq_arch_enable();
+    thread_start();
     UNREACHABLE();
 }
 
 void thread_arch_yield(void)
 {
-	//	Trigger a SW interrupt to schedule a new thread
-	CLINT_REG(CLINT_MSIP) = 1;
+	//	Switch to new thread
+	thread_switch();
+    UNREACHABLE();
 }
 

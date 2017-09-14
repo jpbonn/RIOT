@@ -46,6 +46,12 @@ static inline void cpu_print_last_instruction(void)
     /* This function must exist else RIOT won't compile */
 }
 
+/**
+ * @brief   Initialization of the Newlib-nano stub
+ */
+void nanostubs_init(void);
+
+
 
 
 #ifdef __cplusplus
