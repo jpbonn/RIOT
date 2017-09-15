@@ -21,6 +21,15 @@
 
 #include "periph/dev_enums.h"
 
+/**
+ * @brief   Length of the CPU_ID in octets
+ */
+#define CPUID_LEN           (12U)
+
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
