@@ -55,7 +55,7 @@ void _fini(void)
 }
 
 
-void *sbrk(ptrdiff_t incr)
+void * _sbrk(ptrdiff_t incr)
 {
     unsigned int state = irq_disable();
     void *res = heap_top;
@@ -74,7 +74,7 @@ void *sbrk(ptrdiff_t incr)
 }
 
 
-int open(const char *name, int flags, int mode)
+int _open(const char *name, int flags, int mode)
 {
     (void) name;
     (void) flags;
@@ -84,7 +84,7 @@ int open(const char *name, int flags, int mode)
 }
 
 
-_ssize_t read(int fd, void *buffer, size_t count)
+_ssize_t _read(int fd, void *buffer, size_t count)
 {
     (void)fd;
     (void)buffer;
@@ -93,7 +93,7 @@ _ssize_t read(int fd, void *buffer, size_t count)
     return -1;
 }
 
-_ssize_t write(int fd, const void *data, size_t count)
+_ssize_t _write(int fd, const void *data, size_t count)
 {
     (void)fd;
     (void)data;
@@ -102,14 +102,14 @@ _ssize_t write(int fd, const void *data, size_t count)
     return -1;
 }
 
-int close(int fd)
+int _close(int fd)
 {
     errno = ENODEV;
     return -1;
 }
 
 
-int isatty(int fd)
+int _isatty(int fd)
 {
     errno = 0;
 
@@ -120,7 +120,7 @@ int isatty(int fd)
     return 0;
 }
 
-int fstat(int fd, struct stat *st)
+int _fstat(int fd, struct stat *st)
 {
     (void) fd;
     (void) st;
@@ -129,7 +129,7 @@ int fstat(int fd, struct stat *st)
 }
 
 
-_off_t lseek(int fd, _off_t pos, int dir)
+_off_t _lseek(int fd, _off_t pos, int dir)
 {
     (void) fd;
     (void) pos;
