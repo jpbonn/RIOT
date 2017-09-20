@@ -68,13 +68,13 @@ int timer_set(tim_t dev, int channel, unsigned int timeout)
     if (dev != 0 || channel != 0)
         return -1;
 
-    //	Avoid spureous timer int
+    //	Avoid spurious timer intr
     clear_csr(mie, MIP_MTIP);
 
     //	New intr time
     *mtimecmp = then;
 
-    //	Re-enalble timer int
+    //	Re-enalble timer intr
     set_csr(mie, MIP_MTIP);
     return 0;
 }
@@ -92,13 +92,13 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int value)
     if (dev != 0 || channel != 0)
         return -1;
 
-    //	Avoid spureous timer int
+    //	Avoid spurious timer intr
     clear_csr(mie, MIP_MTIP);
 
     //	New intr time (handle 32bit rollover)
     *mtimecmp = (then > now) ? then : then + 0x100000000;
 
-    //	Re-enalble timer int
+    //	Re-enable timer intr
     set_csr(mie, MIP_MTIP);
     return 0;
 }

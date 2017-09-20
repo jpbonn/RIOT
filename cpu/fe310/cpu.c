@@ -131,6 +131,7 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp,
 				clear_csr(mie, MIP_MTIP);
 
 				//	Handle timer interrupt
+				timer_isr();
 
 				//	Reset interrupt
 				set_csr(mie, MIP_MTIP);
