@@ -2,17 +2,5 @@
 export CPU = fe310
 export CPU_MODEL = fe310
 
-#USEMODULE += arduino-atmega-common
+export FLASHER = $(RIOTBOARD)/$(BOARD)/dist/flasher.sh
 
-# export needed for flash rule
-#export PORT_LINUX ?= /dev/ttyACM0
-#export PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
-#export PROGRAMMER_SPEED ?= 115200
-
-#export FFLAGS += -p m328p
-
-# PROGRAMMER defaults to arduino which is the internal flasher via USB. Can be
-# overridden for debugging (which requires changes that require to use an ISP)
-#export PROGRAMMER ?= arduino
-
-#include $(RIOTBOARD)/arduino-atmega-common/Makefile.include
