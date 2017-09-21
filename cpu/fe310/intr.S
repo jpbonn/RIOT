@@ -14,10 +14,9 @@ trap_entry:
 	// save all regs on stack
 	addi	sp, sp, -34*REGSIZE
 
-	sw	x0,   0*REGSIZE(sp)
 	sw	x1,   1*REGSIZE(sp)
 	sw	x2,   2*REGSIZE(sp)
-	sw	x3,   3*REGSIZE(sp)
+//	sw	x3,   3*REGSIZE(sp)		// Never change gp
 	sw	x4,   4*REGSIZE(sp)
 	sw	x5,   5*REGSIZE(sp)
 	sw	x6,   6*REGSIZE(sp)
@@ -58,13 +57,14 @@ trap_entry:
 	sw	a1,  33*REGSIZE(sp)
 
 	//	Switch to ISR stack
-	la  sp, _isr_sp
+	la  sp, _sp
 
-	// 	Call handle_trap with cause, exception pointer and current stack ptr
+	// 	Call handle_trap with cause, status, exception pointer and current stack ptr
     call handle_trap
 
-    // 	handle_trap returns sp of active thread
-    mv	sp, a0
+    // 	switch to thread of given stack pointer
+    lw	sp, sched_active_thread
+    lw	sp, 0(sp)
 
     //	Restore mstaus and mepc, stay in mpp mode
     lw	t0, 32*REGSIZE(sp)
@@ -77,8 +77,8 @@ trap_entry:
 
 	//	Restore remaining registers
 	lw	x1,   1*REGSIZE(sp)
-	lw	x2,   2*REGSIZE(sp)
-	lw	x3,   3*REGSIZE(sp)
+//	lw	x2,   2*REGSIZE(sp)		// Already have sp from sched_active_thread
+//	lw	x3,   3*REGSIZE(sp)		// Never change gp
 	lw	x4,   4*REGSIZE(sp)
 	lw	x5,   5*REGSIZE(sp)
 	lw	x6,   6*REGSIZE(sp)
@@ -116,10 +116,9 @@ thread_switch:
  	// save all regs on stack
 	addi	sp, sp, -34*REGSIZE
 
-	sw	x0,   0*REGSIZE(sp)
 	sw	x1,   1*REGSIZE(sp)
 	sw	x2,   2*REGSIZE(sp)
-	sw	x3,   3*REGSIZE(sp)
+//	sw	x3,   3*REGSIZE(sp)		// Never change gp
 	sw	x4,   4*REGSIZE(sp)
 	sw	x5,   5*REGSIZE(sp)
 	sw	x6,   6*REGSIZE(sp)
@@ -172,8 +171,8 @@ thread_start:
 
 	//	Restore remaining registers
 	lw	x1,   1*REGSIZE(sp)
-	lw	x2,   2*REGSIZE(sp)
-	lw	x3,   3*REGSIZE(sp)
+//	lw	x2,   2*REGSIZE(sp)		// Already have sp from sched_active_thread
+//	lw	x3,   3*REGSIZE(sp)		// Never change gp
 	lw	x4,   4*REGSIZE(sp)
 	lw	x5,   5*REGSIZE(sp)
 	lw	x6,   6*REGSIZE(sp)
@@ -205,8 +204,6 @@ thread_start:
 
     addi sp, sp, 34*REGSIZE
     mret
-
-
 
 
 

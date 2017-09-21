@@ -32,10 +32,7 @@
 
 
 extern uint32_t _sp;
-extern uint32_t _isr_sp;
-
 extern uint32_t	__stack_size;
-extern uint32_t	__isr_stack_size;
 
 volatile int __in_isr = 0;
 
@@ -64,7 +61,6 @@ void cpu_init(void)
 
 	//	Enable SW interrupt (for thread context switching)
 	write_csr(mie, 0);
-//	set_csr(mie, MIP_MSIP);
 }
 
 
@@ -107,18 +103,18 @@ int irq_arch_in(void)
 /**
  * @brief Global trap and interrupt handler
  */
-unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigned int mstatus)
+void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigned int mstatus)
 {
 	__in_isr = 1;
 
 	//	Check for INT or TRAP
-	if(mcause & MCAUSE_INT)
+	if((mcause & MCAUSE_INT) == MCAUSE_INT)
 	{
 		//	Cause is an interrupt - determine type
-		switch(mcause & MCAUSE_INT)
+		switch(mcause & MCAUSE_CAUSE)
 		{
 			case IRQ_M_SOFT:
-				//	Software interrupt - for thread scheduling (handled below)
+				//	Software interrupt
 				clear_csr(mie, MIP_MSIP);
 				CLINT_REG(CLINT_MSIP) = 0;
 
@@ -148,7 +144,8 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp,
 				break;
 
 			default:
-				//	Unknown interrupt - ignore
+				//	Unknown interrupt - panic!
+				while(1);
 				break;
 		}
 
@@ -164,12 +161,8 @@ unsigned int handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp,
         sched_run();
     }
 
-    //	Return SP for running thread
-    sp = (unsigned int) sched_active_thread->sp;
-
-	__in_isr = 0;
-
-	return sp;
+    //	ISR done
+    __in_isr = 0;
 }
 
 
@@ -215,7 +208,6 @@ char *thread_arch_stack_init(thread_task_func_t task_func,
     stk[10] = (unsigned int) arg;
 
     //	set initial mstatus and mepc
-//    stk[32] = (unsigned int) (MSTATUS_MPP | MSTATUS_MPIE);
     stk[32] = (unsigned int) (MSTATUS_MPP);
     stk[33] = (unsigned int) task_func;
 
@@ -254,13 +246,12 @@ void *thread_arch_isr_stack_pointer(void)
 void *thread_arch_isr_stack_start(void)
 {
 	// ISR stack is carved out in LD file
-    return (void *)&_isr_sp;
+    return (void *)&_sp;
 }
 
 void thread_arch_start_threading(void)
 {
 	//	Initialize threading
-    sched_active_thread = sched_threads[0];
     sched_run();
     irq_arch_enable();
     thread_start();
