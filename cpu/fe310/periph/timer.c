@@ -24,8 +24,8 @@
 #include "periph_cpu.h"
 #include "periph_conf.h"
 #include "periph/timer.h"
-#include "encoding.h"
-#include "platform.h"
+#include "sifive/encoding.h"
+#include "sifive/platform.h"
 
 /**
  * @brief   Save reference to the timer callback

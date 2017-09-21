@@ -22,8 +22,8 @@
 
 #include "periph/cpuid.h"
 #include "cpu.h"
-#include "encoding.h"
-#include "platform.h"
+#include "sifive/encoding.h"
+#include "sifive/platform.h"
 
 
 void cpuid_get(void *id)

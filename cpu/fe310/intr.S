@@ -1,5 +1,5 @@
 
-#include "encoding.h"
+#include "sifive/encoding.h"
 
 #define	REGSIZE		4
 

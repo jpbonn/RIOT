@@ -8,25 +8,17 @@
 #define MCAUSE_CAUSE       0x7FFFFFFF
 
 
-//	E31 Coreplex Local Interrupts (CLINT) Address Map
-#define CLINT_MSIP			0x0000
-#define CLINT_MTIMECMP  	0x4000
-#define CLINT_MTIME  		0xBFF8
 
+#include "sifive/aon.h"
+#include "sifive/clint.h"
+#include "sifive/gpio.h"
+#include "sifive/otp.h"
+#include "sifive/plic.h"
+#include "sifive/prci.h"
+#include "sifive/pwm.h"
+#include "sifive/spi.h"
+#include "sifive/uart.h"
 
-
-/*
-#include "sifive/const.h"
-#include "sifive/devices/aon.h"
-#include "sifive/devices/clint.h"
-#include "sifive/devices/gpio.h"
-#include "sifive/devices/otp.h"
-#include "sifive/devices/plic.h"
-#include "sifive/devices/prci.h"
-#include "sifive/devices/pwm.h"
-#include "sifive/devices/spi.h"
-#include "sifive/devices/uart.h"
-*/
 
 /****************************************************************************
  * Platform definitions
@@ -125,5 +117,10 @@
 #define UART0_REG(offset) 		_REG32(UART0_CTRL_ADDR, offset)
 #define UART1_REG(offset) 		_REG32(UART1_CTRL_ADDR, offset)
 
+// Misc
 
+#define NUM_GPIO 32
+
+#define PLIC_NUM_INTERRUPTS 52
+#define PLIC_NUM_PRIORITIES 7
 #endif /* _SIFIVE_PLATFORM_H */

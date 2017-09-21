@@ -29,8 +29,8 @@
 #include "thread.h"
 #include "irq.h"
 #include "cpu.h"
-#include "encoding.h"
-#include "platform.h"
+#include "sifive/encoding.h"
+#include "sifive/platform.h"
 
 
 extern char _heap_start;			//	Heap markers from fe310.ld file
