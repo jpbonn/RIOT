@@ -29,8 +29,7 @@
 #include "thread.h"
 #include "irq.h"
 #include "cpu.h"
-#include "sifive/encoding.h"
-#include "sifive/platform.h"
+#include "uart_stdio.h"
 
 
 extern char _heap_start;			//	Heap markers from fe310.ld file
@@ -43,7 +42,9 @@ char *heap_top = &_heap_start + 4;
  */
 void nanostubs_init(void)
 {
-	//	Does nothing
+#if defined(MODULE_UART_STDIO)
+	uart_stdio_init();
+#endif
 }
 
 void _init(void)
@@ -86,20 +87,36 @@ int _open(const char *name, int flags, int mode)
 
 _ssize_t _read(int fd, void *buffer, size_t count)
 {
+#if defined(MODULE_UART_STDIO)
+    if (fd == STDIN_FILENO) {
+        return uart_stdio_read(buffer, count);
+    }
+    errno = EBADF;
+    return -1;
+#else
     (void)fd;
     (void)buffer;
     (void)count;
     errno = ENODEV;
     return -1;
+#endif
 }
 
 _ssize_t _write(int fd, const void *data, size_t count)
 {
+#if defined(MODULE_UART_STDIO)
+    if (fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+        return uart_stdio_write(data, count);
+    }
+    errno = EBADF;
+    return -1;
+#else
     (void)fd;
     (void)data;
     (void)count;
     errno = ENODEV;
     return -1;
+#endif
 }
 
 int _close(int fd)

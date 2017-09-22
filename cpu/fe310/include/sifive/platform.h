@@ -123,4 +123,5 @@
 
 #define PLIC_NUM_INTERRUPTS 52
 #define PLIC_NUM_PRIORITIES 7
+
 #endif /* _SIFIVE_PLATFORM_H */

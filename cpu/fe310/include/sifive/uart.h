@@ -12,6 +12,10 @@
 #define UART_REG_IP             0x14
 #define UART_REG_DIV            0x18
 
+/* TXFIFO register */
+#define UART_TXFIFO_FULL        (1 << 31)
+#define UART_RXFIFO_EMPTY       (1 << 31)
+
 /* TXCTRL register */
 #define UART_TXEN               0x1
 #define UART_TXWM(x)            (((x) & 0xffff) << 16)

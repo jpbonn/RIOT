@@ -56,10 +56,7 @@ void cpu_init(void)
 	    write_csr(fcsr, 0);				// initialize rounding mode, undefined at reset
 	}
 
-	//	Initialize newlib-nano stubs
-	nanostubs_init();
-
-	//	Enable SW interrupt (for thread context switching)
+	//	Clear all interrupt enables
 	write_csr(mie, 0);
 }
 
