@@ -1,4 +1,5 @@
 
 USEMODULE += fe310_periph
+USEMODULE += sifive_fe310_periph
 
 include $(RIOTMAKE)/arch/riscv.inc.mk

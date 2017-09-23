@@ -52,12 +52,6 @@ static inline void cpu_print_last_instruction(void)
 void nanostubs_init(void);
 
 
-/**
- * @brief   Timer ISR
- */
-void timer_isr(void);
-
-
 
 
 #ifdef __cplusplus

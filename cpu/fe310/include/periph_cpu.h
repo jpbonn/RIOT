@@ -19,7 +19,10 @@
 #ifndef PERIPH_CPU_H
 #define PERIPH_CPU_H
 
-#include "periph/dev_enums.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief   Length of the CPU_ID in octets
@@ -27,14 +30,22 @@
 #define CPUID_LEN           (12U)
 
 
+/**
+ * @brief   Timer ISR
+ */
+void timer_isr(void);
 
 
+/**
+ * @brief   External ISR callback
+ */
+typedef void (*external_isr_ptr_t) (int intNum);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * @brief   Set External ISR callback
+ */
+void set_external_isr_cb(int intNum, external_isr_ptr_t cbFunc);
 
-/* nothing to do here, yet */
 
 #ifdef __cplusplus
 }

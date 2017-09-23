@@ -173,6 +173,20 @@ void PRCI_use_hfxosc(uint32_t finaldiv)
 	       -1);
 }
 
+void PRCI_use_bypass_clock(void)
+{
+    // Make sure the HFROSC is on before the next line:
+    PRCI_REG(PRCI_HFROSCCFG) |= ROSC_EN(1);
+
+    // Run off 16 MHz crystal
+    PRCI_REG(PRCI_PLLCFG) = (PLL_REFSEL(1) | PLL_BYPASS(1));
+    PRCI_REG(PRCI_PLLCFG) |= (PLL_SEL(1));
+
+    // Turn off HFROSC to save power
+    PRCI_REG(PRCI_HFROSCCFG) &= ~(ROSC_EN(1));
+}
+
+
 // This is a generic function, which
 // doesn't span the entire range of HFROSC settings.
 // It only adjusts the trim, which can span a hundred MHz or so.

@@ -8,6 +8,20 @@
 #include "sifive/plic_driver.h"
 
 
+typedef struct __plic_instance_t
+{
+  uintptr_t base_addr;
+  uint32_t num_sources;
+  uint32_t num_priorities;
+
+} plic_instance_t;
+
+
+//	PLIC instance
+static plic_instance_t 	_plic;
+
+
+
 // Note that there are no assertions or bounds checking on these
 // parameter values.
 
@@ -20,12 +34,12 @@ void volatile_memzero(uint8_t * base, unsigned int size)
 }
 
 void PLIC_init (
-                plic_instance_t * this_plic,
-                uintptr_t         base_addr,
+                uintptr_t base_addr,
                 uint32_t num_sources,
                 uint32_t num_priorities
                 )
 {
+  plic_instance_t* this_plic = &_plic;
   
   this_plic->base_addr = base_addr;
   this_plic->num_sources = num_sources;
@@ -53,8 +67,9 @@ void PLIC_init (
   
 }
 
-void PLIC_set_threshold (plic_instance_t * this_plic,
-			 plic_threshold threshold){
+void PLIC_set_threshold (plic_threshold threshold)
+{
+  plic_instance_t* this_plic = &_plic;
 
   unsigned long hart_id = read_csr(mhartid);  
   volatile plic_threshold* threshold_ptr = (plic_threshold*) (this_plic->base_addr +
@@ -66,7 +81,9 @@ void PLIC_set_threshold (plic_instance_t * this_plic,
 }
   
 
-void PLIC_enable_interrupt (plic_instance_t * this_plic, plic_source source){
+void PLIC_enable_interrupt (plic_source source)
+{
+  plic_instance_t* this_plic = &_plic;
 
   unsigned long hart_id = read_csr(mhartid);
   volatile uint8_t * current_ptr = (volatile uint8_t *)(this_plic->base_addr +
@@ -79,7 +96,9 @@ void PLIC_enable_interrupt (plic_instance_t * this_plic, plic_source source){
 
 }
 
-void PLIC_disable_interrupt (plic_instance_t * this_plic, plic_source source){
+void PLIC_disable_interrupt (plic_source source)
+{
+  plic_instance_t* this_plic = &_plic;
   
   unsigned long hart_id = read_csr(mhartid);
   volatile uint8_t * current_ptr = (volatile uint8_t *) (this_plic->base_addr +
@@ -92,7 +111,9 @@ void PLIC_disable_interrupt (plic_instance_t * this_plic, plic_source source){
   
 }
 
-void PLIC_set_priority (plic_instance_t * this_plic, plic_source source, plic_priority priority){
+void PLIC_set_priority (plic_source source, plic_priority priority)
+{
+  plic_instance_t* this_plic = &_plic;
 
   if (this_plic->num_priorities > 0) {
     volatile plic_priority * priority_ptr = (volatile plic_priority *)
@@ -103,7 +124,9 @@ void PLIC_set_priority (plic_instance_t * this_plic, plic_source source, plic_pr
   }
 }
 
-plic_source PLIC_claim_interrupt(plic_instance_t * this_plic){
+plic_source PLIC_claim_interrupt(void)
+{
+  plic_instance_t* this_plic = &_plic;
   
   unsigned long hart_id = read_csr(mhartid);
 
@@ -116,7 +139,9 @@ plic_source PLIC_claim_interrupt(plic_instance_t * this_plic){
   
 }
 
-void PLIC_complete_interrupt(plic_instance_t * this_plic, plic_source source){
+void PLIC_complete_interrupt(plic_source source)
+{
+  plic_instance_t* this_plic = &_plic;
   
   unsigned long hart_id = read_csr(mhartid);
   volatile plic_source * claim_addr = (volatile plic_source *) (this_plic->base_addr +

@@ -25,23 +25,18 @@
 #include "board.h"
 #include "sifive/encoding.h"
 #include "sifive/platform.h"
+#include "sifive/prci_driver.h"
 
 void board_init(void)
 {
     //	Init CPU
     cpu_init();
 
+    //	Configure clocks
+    PRCI_use_default_clocks();
+    //PRCI_use_bypass_clock();
 
-    // Make sure the HFROSC is on before the next line:
-    PRCI_REG(PRCI_HFROSCCFG) |= ROSC_EN(1);
-    // Run off 16 MHz Crystal for accuracy. Note that the
-    // first line is
-    PRCI_REG(PRCI_PLLCFG) = (PLL_REFSEL(1) | PLL_BYPASS(1));
-    PRCI_REG(PRCI_PLLCFG) |= (PLL_SEL(1));
-    // Turn off HFROSC to save power
-    PRCI_REG(PRCI_HFROSCCFG) &= ~(ROSC_EN(1));
-
-    // Configure UART to print
+    //	Configure pin muxing for UART0
     GPIO_REG(GPIO_OUTPUT_VAL) |= IOF0_UART0_MASK;
     GPIO_REG(GPIO_OUTPUT_EN)  |= IOF0_UART0_MASK;
     GPIO_REG(GPIO_IOF_SEL)    &= ~IOF0_UART0_MASK;

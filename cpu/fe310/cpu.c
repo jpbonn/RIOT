@@ -26,8 +26,10 @@
 #include "thread.h"
 #include "irq.h"
 #include "cpu.h"
+#include "periph_cpu.h"
 #include "sifive/encoding.h"
 #include "sifive/platform.h"
+#include "sifive/plic_driver.h"
 
 
 
@@ -40,6 +42,11 @@ void trap_entry(void);
 void thread_start(void);
 void thread_switch(void);
 
+//	PLIC external ISR function list
+static external_isr_ptr_t	_ext_isrs[PLIC_NUM_INTERRUPTS];
+
+//	NULL interrupt handler
+void	null_isr(uint32_t num) {}
 
 /**
  * @brief Initialize the CPU, set IRQ priorities, clocks
@@ -58,6 +65,18 @@ void cpu_init(void)
 
 	//	Clear all interrupt enables
 	write_csr(mie, 0);
+
+	//	Initial PLIC external interrupt controller
+	PLIC_init(PLIC_CTRL_ADDR, PLIC_NUM_INTERRUPTS, PLIC_NUM_PRIORITIES);
+
+	//	Initialize ISR function list
+	for (int i = 0; i < PLIC_NUM_INTERRUPTS; i++)
+	{
+		_ext_isrs[i] = null_isr;
+	}
+
+	//	Enable external interrupts
+	set_csr(mie, MIP_MEIP);
 }
 
 
@@ -97,6 +116,34 @@ int irq_arch_in(void)
     return __in_isr;
 }
 
+
+/**
+ * @brief   Set External ISR callback
+ */
+void set_external_isr_cb(uint32_t intNum, external_isr_ptr_t cbFunc)
+{
+	if ((intNum > 0 ) && (intNum < PLIC_NUM_INTERRUPTS))
+	{
+		_ext_isrs[intNum] = cbFunc;
+	}
+}
+
+
+/**
+ * @brief External interrupt handler
+ */
+void external_isr(void)
+{
+	plic_source intNum = PLIC_claim_interrupt();
+
+	if ((intNum > 0 ) && (intNum < PLIC_NUM_INTERRUPTS))
+	{
+		_ext_isrs[intNum]((uint32_t)intNum);
+	}
+
+	PLIC_complete_interrupt(intNum);
+}
+
 /**
  * @brief Global trap and interrupt handler
  */
@@ -120,24 +167,13 @@ void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigne
 				break;
 
 			case IRQ_M_TIMER:
-				//	Timer interrupt
-				clear_csr(mie, MIP_MTIP);
-
 				//	Handle timer interrupt
 				timer_isr();
-
-				//	Reset interrupt
-				set_csr(mie, MIP_MTIP);
 				break;
 
 			case IRQ_M_EXT:
-				//	External interrupt
-				clear_csr(mie, MIP_MEIP);
-
 				//	Handle external interrupt
-
-				//	Reset interrupt
-				set_csr(mie, MIP_MEIP);
+				external_isr();
 				break;
 
 			default:
@@ -145,7 +181,6 @@ void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigne
 				while(1);
 				break;
 		}
-
 	}
 	else
 	{

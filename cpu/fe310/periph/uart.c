@@ -26,6 +26,8 @@
 #include "periph/uart.h"
 #include "sifive/encoding.h"
 #include "sifive/platform.h"
+#include "sifive/plic_driver.h"
+#include "sifive/prci_driver.h"
 
 /**
  * @brief   Allocate memory to store the callback functions
@@ -33,8 +35,31 @@
 static uart_isr_ctx_t isr_ctx[UART_NUMOF];
 
 
+void	uart_isr(int num)
+{
+	uint8_t data;
+
+	//	Invoke callback function
+	if(num == INT_UART0_BASE)
+	{
+		//	Intr cleared automatically when data is read
+		data = UART0_REG(UART_REG_RXFIFO);
+		isr_ctx[0].rx_cb(isr_ctx[0].arg, data);
+	}
+
+	if(num == INT_UART1_BASE)
+	{
+		//	Intr cleared automatically when data is read
+		data = UART1_REG(UART_REG_RXFIFO);
+		isr_ctx[1].rx_cb(isr_ctx[1].arg, data);
+	}
+}
+
+
 int uart_init(uart_t dev, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 {
+	uint32_t	uartDiv;
+
     //	Check for valid UART dev
     if (dev >= UART_NUMOF) {
         return UART_NODEV;
@@ -47,27 +72,43 @@ int uart_init(uart_t dev, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
     //	Power on the device
     uart_poweron(dev);
 
+    //	Calculate buadrate divisor given current CPU clk rate
+    //	Ignore the first run (icache needs to be warm)
+    uartDiv = PRCI_measure_mcycle_freq(1000,RTC_FREQ);
+    uartDiv = PRCI_measure_mcycle_freq(1000,RTC_FREQ);
+    uartDiv = uartDiv/baudrate;
+
     //	Enable UART 8-N-1 at given baudrate
     if(dev == 0)
     {
-		// 115200 Baud Rate at 16MHz clk
-		UART0_REG(UART_REG_DIV) = 138;
+		//	Config UART
+		UART0_REG(UART_REG_DIV) = uartDiv;
 		UART0_REG(UART_REG_TXCTRL) = UART_TXEN;
 
-		//	Enable RX is there is a callback
+		//	Enable RX intr if there is a callback
 		if(rx_cb != NULL)
+		{
+			set_external_isr_cb(INT_UART0_BASE, uart_isr);
+			PLIC_enable_interrupt(INT_UART0_BASE);
+			PLIC_set_priority(INT_UART0_BASE, UART0_RX_INTR_PRIORITY);
 			UART0_REG(UART_REG_RXCTRL) = UART_RXEN;
+		}
     }
 
     if(dev == 1)
     {
-		// 115200 Baud Rate at 16MHz clk
-		UART1_REG(UART_REG_DIV) = 138;
+    	//	Config UART
+    	UART1_REG(UART_REG_DIV) = uartDiv;
 		UART1_REG(UART_REG_TXCTRL) = UART_TXEN;
 
-		//	Enable RX is there is a callback
+		//	Enable RX intr if there is a callback
 		if(rx_cb != NULL)
+		{
+			set_external_isr_cb(INT_UART1_BASE, uart_isr);
+			PLIC_enable_interrupt(INT_UART1_BASE);
+			PLIC_set_priority(INT_UART1_BASE, UART1_RX_INTR_PRIORITY);
 			UART1_REG(UART_REG_RXCTRL) = UART_RXEN;
+		}
     }
 
     return UART_OK;

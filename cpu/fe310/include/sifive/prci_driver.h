@@ -50,6 +50,10 @@ void PRCI_use_pll(int refsel, int bypass,
  */
 void PRCI_use_default_clocks(void);
 
+/* Use the external bypass crystal clock
+ */
+void PRCI_use_bypass_clock(void);
+
 /* This routine will adjust the HFROSC trim
  * while using HFROSC as the clock source, 
  * measure the resulting frequency, then

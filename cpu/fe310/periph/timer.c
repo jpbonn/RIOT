@@ -45,7 +45,7 @@ int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
         return -1;
 
     //	Built in timer for FE310 is 32KHz
-    if (freq != 32768ul)
+    if (freq != RTC_FREQ)
         return -1;
 
     //	Save timer callback and arg
@@ -143,8 +143,14 @@ void timer_stop(tim_t dev)
 
 void timer_isr(void)
 {
+	//	Clear intr
+	clear_csr(mie, MIP_MTIP);
+
 	//	Call timer callback function
 	isr_cb(isr_arg, 0);
+
+	//	Reset interrupt
+	set_csr(mie, MIP_MTIP);
 }
 
 

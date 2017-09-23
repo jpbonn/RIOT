@@ -43,6 +43,8 @@ extern "C" {
  * @{
  */
 #define UART_NUMOF          		(2)
+#define UART0_RX_INTR_PRIORITY		(2)
+#define UART1_RX_INTR_PRIORITY		(2)
 /** @} */
 
 
