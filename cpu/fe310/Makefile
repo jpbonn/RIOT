@@ -2,6 +2,6 @@
 MODULE = cpu
 
 # add a list of subdirectories, that should also be built
-DIRS = periph
+DIRS = periph nano
 
 include $(RIOTBASE)/Makefile.base

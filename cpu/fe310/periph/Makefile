@@ -1,4 +1,4 @@
-MODULE = fe310_periph
+MODULE = periph_fe310
 
 DIRS = sifive
 

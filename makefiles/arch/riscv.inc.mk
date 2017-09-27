@@ -2,7 +2,7 @@
 export TARGET_ARCH ?= riscv64-unknown-elf
 
 # define build specific options
-CFLAGS_CPU   = -march=rv32imac -mabi=ilp32 -mcmodel=medlow -msmall-data-limit=8 --specs=nano.specs -DCOREIF_NG=1 
+CFLAGS_CPU   = -march=rv32imac -mabi=ilp32 -mcmodel=medlow -msmall-data-limit=8 -DCOREIF_NG=1 
 CFLAGS_LINK  = -nostartfiles
 CFLAGS_DBG  ?= -g3 -Og
 #CFLAGS_OPT  ?= -Os

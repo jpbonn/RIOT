@@ -2,5 +2,9 @@
 export CPU = fe310
 export CPU_MODEL = fe310
 
+# Uses UART0 for stdio input/output (comment out to disable)
+USEMODULE += uart_stdio
+
+
 export FLASHER = $(RIOTBOARD)/$(BOARD)/dist/flasher.sh
 

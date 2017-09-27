@@ -46,7 +46,7 @@ void thread_switch(void);
 static external_isr_ptr_t	_ext_isrs[PLIC_NUM_INTERRUPTS];
 
 //	NULL interrupt handler
-void	null_isr(uint32_t num) {}
+void	null_isr(int num) {}
 
 /**
  * @brief Initialize the CPU, set IRQ priorities, clocks
@@ -120,7 +120,7 @@ int irq_arch_in(void)
 /**
  * @brief   Set External ISR callback
  */
-void set_external_isr_cb(uint32_t intNum, external_isr_ptr_t cbFunc)
+void set_external_isr_cb(int intNum, external_isr_ptr_t cbFunc)
 {
 	if ((intNum > 0 ) && (intNum < PLIC_NUM_INTERRUPTS))
 	{
