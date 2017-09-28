@@ -253,6 +253,13 @@ void thread_arch_stack_print(void)
 
     printf("printing the current stack of thread %" PRIkernel_pid "\n",
            thread_getpid());
+
+#ifdef DEVELHELP
+    printf("thread name: %s\n", sched_active_thread->name);
+    printf("stack start: 0x%08x\n", (unsigned int)(sched_active_thread->stack_start));
+    printf("stack end  : 0x%08x\n", (unsigned int)(sched_active_thread->stack_start + sched_active_thread->stack_size));
+#endif
+
     printf("  address:      data:\n");
 
     do {
@@ -261,7 +268,7 @@ void thread_arch_stack_print(void)
         count++;
     } while (*sp != STACK_MARKER);
 
-    printf("current stack size: %i byte\n", count);
+    printf("current stack size: %i words\n", count);
 }
 
 
@@ -287,13 +294,6 @@ void thread_arch_start_threading(void)
     sched_run();
     irq_arch_enable();
     thread_start();
-    UNREACHABLE();
-}
-
-void thread_arch_yield(void)
-{
-	//	Switch to new thread
-	thread_switch();
     UNREACHABLE();
 }
 

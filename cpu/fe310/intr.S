@@ -6,17 +6,19 @@
   .section      .text.entry	
   .align 2
   .global trap_entry
+  .global thread_arch_yield
   .global thread_start
-  .global thread_switch
   .global sched_active_thread
+  .global sched_run
 
 trap_entry:
 	// save all regs on stack
 	addi	sp, sp, -34*REGSIZE
 
+	sw	x0,   0*REGSIZE(sp)
 	sw	x1,   1*REGSIZE(sp)
 	sw	x2,   2*REGSIZE(sp)
-//	sw	x3,   3*REGSIZE(sp)		// Never change gp
+	sw	x3,   3*REGSIZE(sp)		// Store, but never change gp
 	sw	x4,   4*REGSIZE(sp)
 	sw	x5,   5*REGSIZE(sp)
 	sw	x6,   6*REGSIZE(sp)
@@ -55,6 +57,10 @@ trap_entry:
     //	Save mstatus and mepc on stack frame
 	sw	a4,  32*REGSIZE(sp)
 	sw	a1,  33*REGSIZE(sp)
+
+	//	Save stack pointer to thread TCB
+	lw	a5,	 sched_active_thread
+	sw  sp,  0(a5)
 
 	//	Switch to ISR stack
 	la  sp, _sp
@@ -112,13 +118,14 @@ trap_entry:
     mret
 
 
-thread_switch:
+thread_arch_yield:
  	// save all regs on stack
 	addi	sp, sp, -34*REGSIZE
 
+	sw	x0,   0*REGSIZE(sp)
 	sw	x1,   1*REGSIZE(sp)
 	sw	x2,   2*REGSIZE(sp)
-//	sw	x3,   3*REGSIZE(sp)		// Never change gp
+	sw	x3,   3*REGSIZE(sp)		// Store, but never change gp
 	sw	x4,   4*REGSIZE(sp)
 	sw	x5,   5*REGSIZE(sp)
 	sw	x6,   6*REGSIZE(sp)
@@ -155,8 +162,15 @@ thread_switch:
 	sw	a4,  32*REGSIZE(sp)
 	sw	ra,  33*REGSIZE(sp)
 
+	//	Save stack pointer to thread TCB
+	lw	a5,	 sched_active_thread
+	sw  sp,  0(a5)
+
+	//	Sched new thread
+	jal	sched_run
+
 thread_start:
-    // 	switch to thread of given stack pointer
+    // 	Switch to active thread
     lw	sp, sched_active_thread
     lw	sp, 0(sp)
 
@@ -166,6 +180,7 @@ thread_start:
     or	t0, t0, t1
     csrw mstatus, t0
 
+	//	Load mepc with RA of active thread for mret below
     lw	t0, 33*REGSIZE(sp)
     csrw mepc, t0
 
