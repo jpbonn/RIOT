@@ -27,6 +27,7 @@
 #include "sifive/encoding.h"
 #include "sifive/platform.h"
 
+
 /**
  * @brief   Save reference to the timer callback
  */
@@ -143,11 +144,17 @@ void timer_stop(tim_t dev)
 
 void timer_isr(void)
 {
-	//	Clear intr
+    volatile uint64_t * mtimecmp    = (uint64_t*) (CLINT_CTRL_ADDR + CLINT_MTIMECMP);
+
+    //	Clear intr
 	clear_csr(mie, MIP_MTIP);
 
+	//	Set mtimecmp to largest value to clear the interrupt
+	*mtimecmp = 0xFFFFFFFFFFFFFFFF;
+
 	//	Call timer callback function
-	isr_cb(isr_arg, 0);
+	if(isr_cb)
+		isr_cb(isr_arg, 0);
 
 	//	Reset interrupt
 	set_csr(mie, MIP_MTIP);

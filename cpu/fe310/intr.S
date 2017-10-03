@@ -6,10 +6,9 @@
   .section      .text.entry	
   .align 2
   .global trap_entry
-  .global thread_arch_yield
   .global thread_start
   .global sched_active_thread
-  .global sched_run
+
 
 trap_entry:
 	// save all regs on stack
@@ -52,34 +51,33 @@ trap_entry:
     csrr a0, mcause
     csrr a1, mepc
     mv   a2, sp
-    csrr a4, mstatus
+    csrr a3, mstatus
 
     //	Save mstatus and mepc on stack frame
-	sw	a4,  32*REGSIZE(sp)
-	sw	a1,  33*REGSIZE(sp)
+	sw	a1,  32*REGSIZE(sp)
+	sw	a3,  33*REGSIZE(sp)
 
 	//	Save stack pointer to thread TCB
-	lw	a5,	 sched_active_thread
-	sw  sp,  0(a5)
+	lw	a4,	 sched_active_thread
+	sw  sp,  0(a4)
 
 	//	Switch to ISR stack
-	la  sp, _sp
+	la 		sp, _sp
+	addi	sp, sp, -4
 
 	// 	Call handle_trap with cause, status, exception pointer and current stack ptr
-    call handle_trap
+    jal handle_trap
 
-    // 	switch to thread of given stack pointer
+    // 	Load stack of active thread
     lw	sp, sched_active_thread
     lw	sp, 0(sp)
 
-    //	Restore mstaus and mepc, stay in mpp mode
+    //	Restore mstaus and mepc
     lw	t0, 32*REGSIZE(sp)
-    li  t1, MSTATUS_MPP
-    or	t0, t0, t1
-    csrw mstatus, t0
+    csrw mepc, t0
 
     lw	t0, 33*REGSIZE(sp)
-    csrw mepc, t0
+    csrw mstatus, t0
 
 	//	Restore remaining registers
 	lw	x1,   1*REGSIZE(sp)
@@ -118,71 +116,18 @@ trap_entry:
     mret
 
 
-thread_arch_yield:
- 	// save all regs on stack
-	addi	sp, sp, -34*REGSIZE
-
-	sw	x0,   0*REGSIZE(sp)
-	sw	x1,   1*REGSIZE(sp)
-	sw	x2,   2*REGSIZE(sp)
-	sw	x3,   3*REGSIZE(sp)		// Store, but never change gp
-	sw	x4,   4*REGSIZE(sp)
-	sw	x5,   5*REGSIZE(sp)
-	sw	x6,   6*REGSIZE(sp)
-	sw	x7,   7*REGSIZE(sp)
-	sw	x8,   8*REGSIZE(sp)
-	sw	x9,   9*REGSIZE(sp)
-	sw	x10, 10*REGSIZE(sp)
-	sw	x11, 11*REGSIZE(sp)
-	sw	x12, 12*REGSIZE(sp)
-	sw	x13, 13*REGSIZE(sp)
-	sw	x14, 14*REGSIZE(sp)
-	sw	x15, 15*REGSIZE(sp)
-	sw	x16, 16*REGSIZE(sp)
-	sw	x17, 17*REGSIZE(sp)
-	sw	x18, 18*REGSIZE(sp)
-	sw	x19, 19*REGSIZE(sp)
-	sw	x20, 20*REGSIZE(sp)
-	sw	x21, 21*REGSIZE(sp)
-	sw	x22, 22*REGSIZE(sp)
-	sw	x23, 23*REGSIZE(sp)
-	sw	x24, 24*REGSIZE(sp)
-	sw	x25, 25*REGSIZE(sp)
-	sw	x26, 26*REGSIZE(sp)
-	sw	x27, 27*REGSIZE(sp)
-	sw	x28, 28*REGSIZE(sp)
-	sw	x29, 29*REGSIZE(sp)
-	sw	x30, 30*REGSIZE(sp)
-	sw	x31, 31*REGSIZE(sp)
-
-    //	Get mstatus value
-    csrr a4, mstatus
-
-    //	Save mstatus and ra (ra from thread_arch_yield) on stack frame
-	sw	a4,  32*REGSIZE(sp)
-	sw	ra,  33*REGSIZE(sp)
-
-	//	Save stack pointer to thread TCB
-	lw	a5,	 sched_active_thread
-	sw  sp,  0(a5)
-
-	//	Sched new thread
-	jal	sched_run
-
 thread_start:
     // 	Switch to active thread
     lw	sp, sched_active_thread
     lw	sp, 0(sp)
 
-    //	Restore mstaus and mepc, stay in mpp mode
-    lw	t0, 32*REGSIZE(sp)
-    li  t1, MSTATUS_MPP
-    or	t0, t0, t1
-    csrw mstatus, t0
-
 	//	Load mepc with RA of active thread for mret below
-    lw	t0, 33*REGSIZE(sp)
+    lw	t0, 32*REGSIZE(sp)
     csrw mepc, t0
+
+    //	Load mstaus of active thread
+    lw	t0, 33*REGSIZE(sp)
+    csrw mstatus, t0
 
 	//	Restore remaining registers
 	lw	x1,   1*REGSIZE(sp)

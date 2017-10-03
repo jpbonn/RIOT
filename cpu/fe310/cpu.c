@@ -32,15 +32,15 @@
 #include "sifive/plic_driver.h"
 
 
+//	Default state of mstatus register
+#define	MSTATUS_DEFAULT		(MSTATUS_MPP | MSTATUS_MPIE)
 
-extern uint32_t _sp;
-extern uint32_t	__stack_size;
 
 volatile int __in_isr = 0;
 
 void trap_entry(void);
 void thread_start(void);
-void thread_switch(void);
+
 
 //	PLIC external ISR function list
 static external_isr_ptr_t	_ext_isrs[PLIC_NUM_INTERRUPTS];
@@ -53,7 +53,9 @@ void	null_isr(int num) {}
  */
 void cpu_init(void)
 {
-	// Setup trap handler function
+    volatile uint64_t * mtimecmp    = (uint64_t*) (CLINT_CTRL_ADDR + CLINT_MTIMECMP);
+
+    // Setup trap handler function
 	write_csr(mtvec, &trap_entry);
 
 	// Enable FPU if present
@@ -75,8 +77,16 @@ void cpu_init(void)
 		_ext_isrs[i] = null_isr;
 	}
 
-	//	Enable external interrupts
+	//	Set mtimecmp to largest value to avoid spurious timer interrupts
+	*mtimecmp = 0xFFFFFFFFFFFFFFFF;
+
+	//	Enable SW, timer and external interrupts
+	set_csr(mie, MIP_MSIP);
+	set_csr(mie, MIP_MTIP);
 	set_csr(mie, MIP_MEIP);
+
+	// 	Set default state of mstatus
+	set_csr(mstatus, MSTATUS_DEFAULT);
 }
 
 
@@ -87,7 +97,8 @@ void cpu_init(void)
 unsigned int irq_arch_enable(void)
 {
 	// Enable all interrupts
-	return set_csr(mstatus, MSTATUS_MIE);
+	set_csr(mstatus, MSTATUS_MIE);
+	return read_csr(mstatus);
 }
 
 /**
@@ -95,8 +106,11 @@ unsigned int irq_arch_enable(void)
  */
 unsigned int irq_arch_disable(void)
 {
+	unsigned int state = read_csr(mstatus);
+
 	// Disable all interrupts
-	return clear_csr(mstatus, MSTATUS_MIE);
+	clear_csr(mstatus, MSTATUS_MIE);
+    return state;
 }
 
 /**
@@ -105,7 +119,7 @@ unsigned int irq_arch_disable(void)
 void irq_arch_restore(unsigned int state)
 {
 	// Restore all interrupts to given state
-	set_csr(mstatus, state);
+	write_csr(mstatus, state);
 }
 
 /**
@@ -162,6 +176,9 @@ void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigne
 				clear_csr(mie, MIP_MSIP);
 				CLINT_REG(CLINT_MSIP) = 0;
 
+				//	Perform context switch
+				sched_context_switch_request = 1;
+
 				//	Reset interrupt
 				set_csr(mie, MIP_MSIP);
 				break;
@@ -177,15 +194,9 @@ void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp, unsigne
 				break;
 
 			default:
-				//	Unknown interrupt - panic!
-				while(1);
+				//	Unknown interrupt
 				break;
 		}
-	}
-	else
-	{
-		//	Cause is an exception trap - panic!
-		while(1);
 	}
 
 	//	Check for a context switch
@@ -240,8 +251,8 @@ char *thread_arch_stack_init(thread_task_func_t task_func,
     stk[10] = (unsigned int) arg;
 
     //	set initial mstatus and mepc
-    stk[32] = (unsigned int) (MSTATUS_MPP);
-    stk[33] = (unsigned int) task_func;
+    stk[32] = (unsigned int) task_func;
+    stk[33] = (unsigned int) (MSTATUS_DEFAULT | MSTATUS_MIE);
 
     return (char*) stk;
 }
@@ -284,8 +295,7 @@ void *thread_arch_isr_stack_pointer(void)
 
 void *thread_arch_isr_stack_start(void)
 {
-	// ISR stack is carved out in LD file
-    return (void *)&_sp;
+    return NULL;
 }
 
 void thread_arch_start_threading(void)
@@ -295,5 +305,11 @@ void thread_arch_start_threading(void)
     irq_arch_enable();
     thread_start();
     UNREACHABLE();
+}
+
+void thread_arch_yield(void)
+{
+	//	Use SW intr to schedule context switch
+	CLINT_REG(CLINT_MSIP) = 1;
 }
 

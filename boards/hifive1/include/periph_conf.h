@@ -38,6 +38,13 @@ extern "C" {
 
 
 /**
+ * @name    Timer configuration
+ *
+ * @{
+ */
+#define TIMER_NUMOF         		(1)
+
+/**
  * @name    UART configuration
  *
  * @{
