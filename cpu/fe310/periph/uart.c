@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "arch/irq_arch.h"
 #include "cpu.h"
 #include "periph_cpu.h"
 #include "periph_conf.h"
@@ -37,21 +38,31 @@ static uart_isr_ctx_t isr_ctx[UART_NUMOF];
 
 void	uart_isr(int num)
 {
-	uint8_t data;
+	uint32_t data;
 
 	//	Invoke callback function
 	if(num == INT_UART0_BASE)
 	{
-		//	Intr cleared automatically when data is read
 		data = UART0_REG(UART_REG_RXFIFO);
-		isr_ctx[0].rx_cb(isr_ctx[0].arg, data);
+
+		//	Intr cleared automatically when data is read
+		while((data & UART_RXFIFO_EMPTY) != UART_RXFIFO_EMPTY)
+		{
+			isr_ctx[0].rx_cb(isr_ctx[0].arg, (uint8_t)data);
+			data = UART0_REG(UART_REG_RXFIFO);
+		}
 	}
 
 	if(num == INT_UART1_BASE)
 	{
-		//	Intr cleared automatically when data is read
 		data = UART1_REG(UART_REG_RXFIFO);
-		isr_ctx[1].rx_cb(isr_ctx[1].arg, data);
+
+		//	Intr cleared automatically when data is read
+		while((data & UART_RXFIFO_EMPTY) != UART_RXFIFO_EMPTY)
+		{
+			isr_ctx[1].rx_cb(isr_ctx[1].arg, (uint8_t)data);
+			data = UART1_REG(UART_REG_RXFIFO);
+		}
 	}
 }
 
@@ -88,10 +99,18 @@ int uart_init(uart_t dev, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 		//	Enable RX intr if there is a callback
 		if(rx_cb != NULL)
 		{
+			//	Disable ext interrupts when setting up
+			clear_csr(mie, MIP_MEIP);
+
+			//	Configure UART ISR with PLIC
 			set_external_isr_cb(INT_UART0_BASE, uart_isr);
 			PLIC_enable_interrupt(INT_UART0_BASE);
 			PLIC_set_priority(INT_UART0_BASE, UART0_RX_INTR_PRIORITY);
+			UART0_REG(UART_REG_IE) = UART_IP_RXWM;
 			UART0_REG(UART_REG_RXCTRL) = UART_RXEN;
+
+			//	Re-eanble ext interrupts
+			set_csr(mie, MIP_MEIP);
 		}
     }
 
@@ -104,10 +123,18 @@ int uart_init(uart_t dev, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 		//	Enable RX intr if there is a callback
 		if(rx_cb != NULL)
 		{
+			//	Disable ext interrupts when setting up
+			clear_csr(mie, MIP_MEIP);
+
+			//	Configure UART ISR with PLIC
 			set_external_isr_cb(INT_UART1_BASE, uart_isr);
 			PLIC_enable_interrupt(INT_UART1_BASE);
 			PLIC_set_priority(INT_UART1_BASE, UART1_RX_INTR_PRIORITY);
+			UART1_REG(UART_REG_IE) = UART_IP_RXWM;
 			UART1_REG(UART_REG_RXCTRL) = UART_RXEN;
+
+			//	Re-eanble ext interrupts
+			set_csr(mie, MIP_MEIP);
 		}
     }
 

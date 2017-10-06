@@ -43,7 +43,9 @@ char *heap_top = &_heap_start + 4;
 void nanostubs_init(void)
 {
 #if defined(MODULE_UART_STDIO)
+	//	STDIO redirected to UART, no line buffering
 	uart_stdio_init();
+	setvbuf(stdout, NULL, _IONBF, 0);
 #endif
 }
 

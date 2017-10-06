@@ -33,8 +33,8 @@ void board_init(void)
     cpu_init();
 
     //	Configure clocks
-    PRCI_use_default_clocks();
-    //PRCI_use_bypass_clock();
+    //PRCI_use_default_clocks();
+    PRCI_use_bypass_clock();
 
     //	Configure pin muxing for UART0
     GPIO_REG(GPIO_OUTPUT_VAL) |= IOF0_UART0_MASK;
