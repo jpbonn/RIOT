@@ -57,7 +57,6 @@ PSEUDOMODULES += newlib_gnu_source
 PSEUDOMODULES += newlib_nano
 PSEUDOMODULES += openthread
 PSEUDOMODULES += pktqueue
-PSEUDOMODULES += posix
 PSEUDOMODULES += printf_float
 PSEUDOMODULES += prng
 PSEUDOMODULES += prng_%
@@ -69,6 +68,9 @@ PSEUDOMODULES += sock
 PSEUDOMODULES += sock_ip
 PSEUDOMODULES += sock_tcp
 PSEUDOMODULES += sock_udp
+
+# print ascii representation in function od_hex_dump()
+PSEUDOMODULES += od_string
 
 # include variants of the AT86RF2xx drivers as pseudo modules
 PSEUDOMODULES += at86rf23%
