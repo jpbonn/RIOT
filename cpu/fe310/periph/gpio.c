@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "arch/irq_arch.h"
+#include "irq.h"
 #include "cpu.h"
 #include "periph_cpu.h"
 #include "periph_conf.h"

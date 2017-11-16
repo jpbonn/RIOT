@@ -30,7 +30,6 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#if RTC_NUMOF
 
 typedef struct {
 	rtc_alarm_cb_t cb; /**< callback called from RTC interrupt */
@@ -106,4 +105,3 @@ static void rtc_cb(void* arg)
 	}
 }
 
-#endif /* RTC_NUMOF */

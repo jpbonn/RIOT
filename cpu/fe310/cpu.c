@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "arch/thread_arch.h"
-#include "arch/irq_arch.h"
+#include "thread.h"
+#include "irq.h"
 #include "sched.h"
 #include "thread.h"
 #include "irq.h"
@@ -88,7 +88,7 @@ void cpu_init(void) {
 /**
  * @brief Enable all maskable interrupts
  */
-unsigned int irq_arch_enable(void) {
+unsigned int irq_enable(void) {
 	// Enable all interrupts
 	set_csr(mstatus, MSTATUS_MIE);
 	return read_csr(mstatus);
@@ -97,7 +97,7 @@ unsigned int irq_arch_enable(void) {
 /**
  * @brief Disable all maskable interrupts
  */
-unsigned int irq_arch_disable(void) {
+unsigned int irq_disable(void) {
 	unsigned int state = read_csr(mstatus);
 
 	// Disable all interrupts
@@ -108,7 +108,7 @@ unsigned int irq_arch_disable(void) {
 /**
  * @brief Restore the state of the IRQ flags
  */
-void irq_arch_restore(unsigned int state) {
+void irq_restore(unsigned int state) {
 	// Restore all interrupts to given state
 	write_csr(mstatus, state);
 }
@@ -116,7 +116,7 @@ void irq_arch_restore(unsigned int state) {
 /**
  * @brief See if the current context is inside an ISR
  */
-int irq_arch_in(void) {
+int irq_is_in(void) {
 	return __in_isr;
 }
 
@@ -193,12 +193,12 @@ void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp,
 /**
  * @brief   Noticeable marker marking the beginning of a stack segment
  *
- * This marker is used e.g. by *thread_arch_start_threading* to identify the
+ * This marker is used e.g. by *thread_start_threading* to identify the
  * stacks beginning.
  */
 #define STACK_MARKER                (0x77777777)
 
-char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
+char *thread_stack_init(thread_task_func_t task_func, void *arg,
 		void *stack_start, int stack_size) {
 	uint32_t *stk, *stkFrame;
 
@@ -234,7 +234,7 @@ char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
 	return (char*) stk;
 }
 
-void thread_arch_stack_print(void) {
+void thread_print_stack(void) {
 	int count = 0;
 	uint32_t *sp = (uint32_t *) sched_active_thread->sp;
 
@@ -258,27 +258,27 @@ void thread_arch_stack_print(void) {
 	printf("current stack size: %i words\n", count);
 }
 
-int thread_arch_isr_stack_usage(void) {
+int thread_isr_stack_usage(void) {
 	return 0;
 }
 
-void *thread_arch_isr_stack_pointer(void) {
+void *thread_isr_stack_pointer(void) {
 	return NULL;
 }
 
-void *thread_arch_isr_stack_start(void) {
+void *thread_isr_stack_start(void) {
 	return NULL;
 }
 
-void thread_arch_start_threading(void) {
+void cpu_switch_context_exit(void) {
 	//	Initialize threading
 	sched_run();
-	irq_arch_enable();
+	irq_enable();
 	thread_start();
 	UNREACHABLE();
 }
 
-void thread_arch_yield(void) {
+void thread_yield_higher(void) {
 	//	Use SW intr to schedule context switch
 	CLINT_REG(CLINT_MSIP) = 1;
 }

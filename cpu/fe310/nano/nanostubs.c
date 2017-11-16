@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
-#include "arch/thread_arch.h"
 #include "sched.h"
 #include "thread.h"
 #include "irq.h"

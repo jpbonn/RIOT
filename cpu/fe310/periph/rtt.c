@@ -36,8 +36,6 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-#if RTT_NUMOF
-
 //	Convert RTT freq to pre-scaler value
 #if (RTT_FREQUENCY == 32768)
 #define	RTT_SCALE		(0)
@@ -198,4 +196,3 @@ void rtt_poweroff(void)
 	AON_REG(AON_RTCCFG) &= ~AON_RTCCFG_ENALWAYS;
 }
 
-#endif /* RTC_NUMOF */
