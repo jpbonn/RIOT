@@ -111,6 +111,14 @@ endif
 
 QQ=
 
+# Set this to 1 to enable code in RIOT that does safety checking
+# which is not needed in a production environment but helps in the
+# development process:
+DEVELHELP ?= 0
+ifeq ($(DEVELHELP),1)
+  CFLAGS += -DDEVELHELP
+endif
+
 # Fail on warnings. Can be overridden by `make WERROR=0`.
 WERROR ?= 1
 export WERROR
@@ -408,6 +416,13 @@ debug-server:
 		'${COLOR_RED}Debug server program $(DEBUGSERVER) not found. Aborting.${COLOR_RESET}'; \
 		exit 1; }
 	$(DEBUGSERVER) $(DEBUGSERVER_FLAGS)
+
+emulate:
+	@command -v $(EMULATOR) >/dev/null 2>&1 || \
+		{ $(COLOR_ECHO) \
+		'${COLOR_RED}Emulation program $(EMULATOR) not found. Aborting.${COLOR_RESET}'; \
+		exit 1; }
+	$(EMULATOR) $(EMULATOR_FLAGS)
 
 reset:
 	@command -v $(RESET) >/dev/null 2>&1 || \

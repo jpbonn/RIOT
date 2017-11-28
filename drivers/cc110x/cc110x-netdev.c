@@ -27,6 +27,7 @@
 #include "cc110x-netdev.h"
 #include "cc110x-internal.h"
 #include "cc110x-interface.h"
+#include "cc110x-defines.h"
 #include "net/eui64.h"
 
 #include "periph/gpio.h"
@@ -61,7 +62,7 @@ static int _recv(netdev_t *dev, void *buf, size_t len, void *info)
     if (info != NULL) {
         netdev_cc110x_rx_info_t *cc110x_info = info;
 
-        cc110x_info->rssi = cc110x->pkt_buf.rssi;
+        cc110x_info->rssi = (int16_t)cc110x->pkt_buf.rssi/2 - CC110X_RSSI_OFFSET;
         cc110x_info->lqi = cc110x->pkt_buf.lqi;
     }
     return cc110x_pkt->length;
@@ -114,6 +115,10 @@ static int _get(netdev_t *dev, netopt_t opt, void *value, size_t value_len)
             return 1;
         case NETOPT_IPV6_IID:
             return _get_iid(dev, value, value_len);
+        case NETOPT_ADDR_LEN:
+        case NETOPT_SRC_LEN:
+            *((uint16_t *)value) = sizeof(cc110x->radio_address);
+            return sizeof(uint16_t);
         default:
             break;
     }
