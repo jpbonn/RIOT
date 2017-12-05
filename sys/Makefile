@@ -61,9 +61,6 @@ endif
 ifneq (,$(filter nhdp,$(USEMODULE)))
   DIRS += net/routing/nhdp
 endif
-ifneq (,$(filter gnrc_netdev,$(USEMODULE)))
-  DIRS += net/gnrc/link_layer/netdev
-endif
 ifneq (,$(filter fib,$(USEMODULE)))
   DIRS += net/network_layer/fib
 endif
@@ -123,6 +120,9 @@ ifneq (,$(filter devfs,$(USEMODULE)))
 endif
 ifneq (,$(filter l2filter,$(USEMODULE)))
   DIRS += net/link_layer/l2filter
+endif
+ifneq (,$(filter nanocoap,$(USEMODULE)))
+  DIRS += net/application_layer/nanocoap
 endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))

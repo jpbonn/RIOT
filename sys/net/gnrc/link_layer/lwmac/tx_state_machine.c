@@ -74,7 +74,7 @@ static uint8_t _send_bcast(gnrc_netif_t *netif)
         gnrc_pktsnip_t *pkt_payload;
 
         /* Prepare packet with LWMAC header*/
-        gnrc_lwmac_frame_broadcast_t hdr = {};
+        gnrc_lwmac_frame_broadcast_t hdr;
         hdr.header.type = GNRC_LWMAC_FRAMETYPE_BROADCAST;
         hdr.seq_nr = netif->mac.tx.bcast_seqnr++;
 
@@ -165,7 +165,7 @@ static uint8_t _send_wr(gnrc_netif_t *netif)
     }
 
     /* Assemble WR */
-    gnrc_lwmac_frame_wr_t wr_hdr = {};
+    gnrc_lwmac_frame_wr_t wr_hdr;
     wr_hdr.header.type = GNRC_LWMAC_FRAMETYPE_WR;
     memcpy(&(wr_hdr.dst_addr.addr), netif->mac.tx.current_neighbor->l2_addr,
            netif->mac.tx.current_neighbor->l2_addr_len);
@@ -316,7 +316,7 @@ static uint8_t _packet_process_in_wait_for_wa(gnrc_netif_t *netif)
             }
 
             uint32_t own_phase;
-            own_phase = _gnrc_lwmac_ticks_to_phase(netif->mac.lwmac.last_wakeup);
+            own_phase = _gnrc_lwmac_ticks_to_phase(netif->mac.prot.lwmac.last_wakeup);
 
             if (own_phase >= netif->mac.tx.timestamp) {
                 own_phase = own_phase - netif->mac.tx.timestamp;
@@ -464,10 +464,10 @@ static bool _send_data(gnrc_netif_t *netif)
     DEBUG("[LWMAC-tx]: spent %lu WR in TX\n", netif->mac.tx.wr_sent);
 
 #if (LWMAC_ENABLE_DUTYCYLE_RECORD == 1)
-    netif->mac.lwmac.pkt_start_sending_time_ticks =
-        rtt_get_counter() - netif->mac.lwmac.pkt_start_sending_time_ticks;
+    netif->mac.prot.lwmac.pkt_start_sending_time_ticks =
+        rtt_get_counter() - netif->mac.prot.lwmac.pkt_start_sending_time_ticks;
     DEBUG("[LWMAC-tx]: pkt sending delay in TX: %lu us\n",
-          RTT_TICKS_TO_US(netif->mac.lwmac.pkt_start_sending_time_ticks));
+          RTT_TICKS_TO_US(netif->mac.prot.lwmac.pkt_start_sending_time_ticks));
 #endif
 
     return true;
@@ -492,7 +492,7 @@ void gnrc_lwmac_tx_start(gnrc_netif_t *netif,
     netif->mac.tx.wr_sent = 0;
 
 #if (LWMAC_ENABLE_DUTYCYLE_RECORD == 1)
-    netif->mac.lwmac.pkt_start_sending_time_ticks = rtt_get_counter();
+    netif->mac.prot.lwmac.pkt_start_sending_time_ticks = rtt_get_counter();
 #endif
 }
 

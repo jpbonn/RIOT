@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Ken Bannister. All rights reserved.
+ * Copyright (c) 2015-2017 Ken Bannister. All rights reserved.
  *               2017 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
@@ -212,9 +212,11 @@
 
 #include <stdint.h>
 #include <stdatomic.h>
+
+#include "net/ipv6/addr.h"
 #include "net/sock/udp.h"
 #include "mutex.h"
-#include "nanocoap.h"
+#include "net/nanocoap.h"
 #include "xtimer.h"
 
 #ifdef __cplusplus
@@ -301,6 +303,11 @@ extern "C" {
 #define GCOAP_MEMO_TIMEOUT      (3)     /**< Timeout waiting for response */
 #define GCOAP_MEMO_ERR          (4)     /**< Error processing response packet */
 /** @} */
+
+/**
+ * @brief   Value for send_limit in request memo when non-confirmable type
+ */
+#define GCOAP_SEND_LIMIT_NON    (-1)
 
 /**
  * @brief   Time in usec that the event loop waits for an incoming CoAP message
@@ -425,12 +432,27 @@ typedef void (*gcoap_resp_handler_t)(unsigned req_state, coap_pkt_t* pdu,
                                      sock_udp_ep_t *remote);
 
 /**
+ * @brief  Extends request memo for resending a confirmable request.
+ */
+typedef struct {
+    sock_udp_ep_t remote_ep;            /**< Remote endpoint */
+    uint8_t *pdu_buf;                   /**< Buffer containing the PDU */
+    size_t pdu_len;                     /**< Length of pdu_buf */
+} gcoap_resend_t;
+
+/**
  * @brief   Memo to handle a response for a request
  */
 typedef struct {
     unsigned state;                     /**< State of this memo, a GCOAP_MEMO... */
-    uint8_t hdr_buf[GCOAP_HEADER_MAXLEN];
-                                        /**< Stores a copy of the request header */
+    int send_limit;                     /**< Remaining resends, 0 if none;
+                                             GCOAP_SEND_LIMIT_NON if non-confirmable */
+    union {
+        uint8_t hdr_buf[GCOAP_HEADER_MAXLEN];
+                                        /**< Copy of PDU header, if no resends */
+        gcoap_resend_t data;            /**< Endpoint and PDU buffer, for resend */
+    } msg;                              /**< Request message data; if confirmable,
+                                             supports resending message */
     gcoap_resp_handler_t resp_handler;  /**< Callback for the response */
     xtimer_t response_timer;            /**< Limits wait for response */
     msg_t timeout_msg;                  /**< For response timer */

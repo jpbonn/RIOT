@@ -24,6 +24,14 @@ ifneq (,$(filter gnrc_mac,$(USEMODULE)))
   USEMODULE += csma_sender
 endif
 
+ifneq (,$(filter gnrc_gomach,$(USEMODULE)))
+  USEMODULE += gnrc_netif
+  USEMODULE += random
+  USEMODULE += xtimer
+  USEMODULE += gnrc_mac
+  FEATURES_REQUIRED += periph_rtt
+endif
+
 ifneq (,$(filter nhdp,$(USEMODULE)))
   USEMODULE += sock_udp
   USEMODULE += xtimer
@@ -495,10 +503,6 @@ ifneq (,$(filter gnrc_pktbuf_%, $(USEMODULE)))
   USEMODULE += gnrc_pktbuf # make MODULE_GNRC_PKTBUF macro available for all implementations
 endif
 
-ifneq (,$(filter gnrc_netdev,$(USEMODULE)))
-  USEMODULE += netopt
-endif
-
 ifneq (,$(filter netstats_%, $(USEMODULE)))
   USEMODULE += netstats
 endif
@@ -649,12 +653,16 @@ ifneq (,$(filter l2filter_%,$(USEMODULE)))
 endif
 
 ifneq (,$(filter gcoap,$(USEMODULE)))
-USEPKG += nanocoap
-USEMODULE += gnrc_sock_udp
+  USEMODULE += nanocoap
+  USEMODULE += gnrc_sock_udp
 endif
 
 ifneq (,$(filter luid,$(USEMODULE)))
   FEATURES_OPTIONAL += periph_cpuid
+endif
+
+ifneq (,$(filter nanocoap_%,$(USEMODULE)))
+  USEMODULE += nanocoap
 endif
 
 # always select gpio (until explicit dependencies are sorted out)
