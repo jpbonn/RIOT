@@ -107,6 +107,7 @@ _ssize_t _write(int fd, const void *data, size_t count) {
 }
 
 int _close(int fd) {
+	(void) fd;
 	errno = ENODEV;
 	return -1;
 }

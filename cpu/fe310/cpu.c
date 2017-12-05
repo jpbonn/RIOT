@@ -44,6 +44,7 @@ static external_isr_ptr_t _ext_isrs[PLIC_NUM_INTERRUPTS];
 
 //	NULL interrupt handler
 void null_isr(int num) {
+	(void) num;
 }
 
 /**
@@ -145,8 +146,7 @@ void external_isr(void) {
 /**
  * @brief Global trap and interrupt handler
  */
-void handle_trap(unsigned int mcause, unsigned int epc, unsigned int sp,
-		unsigned int mstatus) {
+void handle_trap(unsigned int mcause) {
 	__in_isr = 1;
 
 	//	Check for INT or TRAP

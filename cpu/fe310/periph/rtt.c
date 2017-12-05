@@ -85,6 +85,8 @@ static rtt_state_t rtt_callback;
 
 void rtt_isr(int num)
 {
+	(void) num;
+
 	//	Clear intr
 	AON_REG(AON_RTCCMP) = RTT_MAX_VALUE;
 

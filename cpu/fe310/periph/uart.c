@@ -43,7 +43,7 @@ void uart_isr(int num) {
 		data = UART0_REG(UART_REG_RXFIFO);
 
 		//	Intr cleared automatically when data is read
-		while ((data & UART_RXFIFO_EMPTY) != UART_RXFIFO_EMPTY) {
+		while ((data & UART_RXFIFO_EMPTY) != (uint32_t)UART_RXFIFO_EMPTY) {
 			isr_ctx[0].rx_cb(isr_ctx[0].arg, (uint8_t) data);
 			data = UART0_REG(UART_REG_RXFIFO);
 		}
@@ -53,7 +53,7 @@ void uart_isr(int num) {
 		data = UART1_REG(UART_REG_RXFIFO);
 
 		//	Intr cleared automatically when data is read
-		while ((data & UART_RXFIFO_EMPTY) != UART_RXFIFO_EMPTY) {
+		while ((data & UART_RXFIFO_EMPTY) != (uint32_t)UART_RXFIFO_EMPTY) {
 			isr_ctx[1].rx_cb(isr_ctx[1].arg, (uint8_t) data);
 			data = UART1_REG(UART_REG_RXFIFO);
 		}
@@ -134,7 +134,7 @@ void uart_write(uart_t dev, const uint8_t *data, size_t len) {
 		for (size_t i = 0; i < len; i++) {
 			//	Wait for FIFO to empty
 			while ((UART0_REG(UART_REG_TXFIFO) & UART_TXFIFO_FULL)
-					== UART_TXFIFO_FULL)
+					== (uint32_t)UART_TXFIFO_FULL)
 				;
 
 			//	Write a byte
@@ -146,7 +146,7 @@ void uart_write(uart_t dev, const uint8_t *data, size_t len) {
 		for (size_t i = 0; i < len; i++) {
 			//	Wait for FIFO to empty
 			while ((UART1_REG(UART_REG_TXFIFO) & UART_TXFIFO_FULL)
-					== UART_TXFIFO_FULL)
+					== (uint32_t)UART_TXFIFO_FULL)
 				;
 
 			//	Write a byte
@@ -156,8 +156,10 @@ void uart_write(uart_t dev, const uint8_t *data, size_t len) {
 }
 
 void uart_poweron(uart_t dev) {
+	(void) dev;
 }
 
 void uart_poweroff(uart_t dev) {
+	(void) dev;
 }
 
